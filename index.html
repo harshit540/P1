@@ -1,25 +1,652 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-    <title>My First Webpage</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+    <title>Sanjeevani Setu - Doctor Appointment System</title>
+    <!-- EmailJS SDK -->
+    <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
+    <!-- Google API Client Library -->
+    <script src="https://apis.google.com/js/api.js"></script>
+    <!-- Google Identity Services for OAuth 2.0 -->
+    <script src="https://accounts.google.com/gsi/client"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', 'Poppins', system-ui, -apple-system, sans-serif;
+        }
+
+        body {
+            background: linear-gradient(135deg, #e0f2fe 0%, #f0f9ff 100%);
+            min-height: 100vh;
+            padding: 2rem 1rem;
+        }
+
+        .container {
+            max-width: 850px;
+            margin: 0 auto;
+        }
+
+        .card {
+            background: rgba(255, 255, 255, 0.96);
+            backdrop-filter: blur(2px);
+            border-radius: 2rem;
+            box-shadow: 0 25px 45px -12px rgba(0, 0, 0, 0.25), 0 8px 18px rgba(0, 0, 0, 0.05);
+            overflow: hidden;
+            transition: transform 0.2s ease;
+        }
+
+        .header {
+            background: #1e3a8a;
+            padding: 1.8rem 2rem;
+            color: white;
+        }
+
+        .header h1 {
+            font-size: 1.9rem;
+            font-weight: 600;
+            letter-spacing: -0.3px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .header h1:before {
+            content: "🏥";
+            font-size: 2rem;
+        }
+
+        .header p {
+            margin-top: 8px;
+            opacity: 0.85;
+            font-size: 1rem;
+        }
+
+        .form-section {
+            padding: 2rem 2rem 2rem 2rem;
+        }
+
+        .form-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1.5rem;
+        }
+
+        .full-width {
+            grid-column: span 2;
+        }
+
+        .input-group {
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+
+        .input-group label {
+            font-weight: 600;
+            color: #0f172a;
+            font-size: 0.9rem;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .input-group label i {
+            font-weight: normal;
+            font-style: normal;
+        }
+
+        input, select, textarea {
+            padding: 0.85rem 1rem;
+            border: 1.5px solid #e2e8f0;
+            border-radius: 1rem;
+            font-size: 0.95rem;
+            transition: all 0.2s;
+            background: #fefefe;
+            outline: none;
+        }
+
+        input:focus, select:focus {
+            border-color: #3b82f6;
+            box-shadow: 0 0 0 3px rgba(59,130,246,0.2);
+        }
+
+        button {
+            background: #1e3a8a;
+            color: white;
+            border: none;
+            padding: 1rem 1.8rem;
+            border-radius: 3rem;
+            font-weight: 600;
+            font-size: 1rem;
+            cursor: pointer;
+            transition: all 0.2s;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 12px;
+            width: 100%;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.05);
+        }
+
+        button:hover {
+            background: #0f2b6d;
+            transform: translateY(-2px);
+            box-shadow: 0 12px 20px -12px #1e3a8a70;
+        }
+
+        button:active {
+            transform: translateY(1px);
+        }
+
+        .btn-secondary {
+            background: #f1f5f9;
+            color: #1e293b;
+            box-shadow: none;
+        }
+
+        .message-area {
+            margin-top: 1.8rem;
+            padding: 1rem 1.2rem;
+            border-radius: 1.2rem;
+            background: #f8fafc;
+            border-left: 5px solid;
+            transition: all 0.2s;
+        }
+
+        .message-success {
+            border-left-color: #10b981;
+            background: #ecfdf5;
+            color: #065f46;
+        }
+
+        .message-error {
+            border-left-color: #ef4444;
+            background: #fef2f2;
+            color: #991b1b;
+        }
+
+        .message-info {
+            border-left-color: #3b82f6;
+            background: #eff6ff;
+            color: #1e40af;
+        }
+
+        .loader {
+            display: inline-block;
+            width: 18px;
+            height: 18px;
+            border: 2px solid rgba(255,255,255,0.3);
+            border-radius: 50%;
+            border-top-color: white;
+            animation: spin 0.6s linear infinite;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        .status-badge {
+            font-size: 0.85rem;
+            background: #eef2ff;
+            padding: 0.25rem 0.8rem;
+            border-radius: 30px;
+            display: inline-block;
+        }
+
+        footer {
+            text-align: center;
+            padding: 1.2rem;
+            font-size: 0.8rem;
+            color: #475569;
+            background: #f1f5f9;
+            border-top: 1px solid #e2e8f0;
+        }
+
+        @media (max-width: 640px) {
+            .form-grid {
+                grid-template-columns: 1fr;
+                gap: 1rem;
+            }
+            .full-width {
+                grid-column: span 1;
+            }
+            .form-section {
+                padding: 1.5rem;
+            }
+            .header h1 {
+                font-size: 1.5rem;
+            }
+        }
+
+        .doctor-avatar {
+            background: #dbeafe;
+            border-radius: 40px;
+            padding: 2px 10px;
+            font-size: 0.75rem;
+            font-weight: 500;
+        }
+    </style>
 </head>
 <body>
+<div class="container">
+    <div class="card">
+        <div class="header">
+            <h1>Sanjeevani Setu</h1>
+            <p>🤝 ડોક્ટરની મુલાકાત સરળ બનાવો | Book Appointment · Auto Email · Google Calendar Sync</p>
+        </div>
+        <div class="form-section">
+            <form id="appointmentForm">
+                <div class="form-grid">
+                    <div class="input-group">
+                        <label><span>🧑‍⚕️</span> દર્દીનું પૂરું નામ</label>
+                        <input type="text" id="patientName" placeholder="e.g. Rameshbhai Patel" required>
+                    </div>
+                    <div class="input-group">
+                        <label><span>📧</span> Email (મેળવવા માટે)</label>
+                        <input type="email" id="patientEmail" placeholder="patient@example.com" required>
+                    </div>
+                    <div class="input-group">
+                        <label><span>👨‍⚕️</span> ડૉક્ટર પસંદ કરો</label>
+                        <select id="doctorName" required>
+                            <option value="">-- પસંદ કરો --</option>
+                            <option value="Dr. Aarti Mehta (Cardiologist)">Dr. Aarti Mehta (Cardiologist)</option>
+                            <option value="Dr. Rajiv Desai (Dermatologist)">Dr. Rajiv Desai (Dermatologist)</option>
+                            <option value="Dr. Sonal Shah (General Physician)">Dr. Sonal Shah (General Physician)</option>
+                            <option value="Dr. Vikram Singh (Orthopedic)">Dr. Vikram Singh (Orthopedic)</option>
+                        </select>
+                    </div>
+                    <div class="input-group">
+                        <label><span>📅</span> તારીખ</label>
+                        <input type="date" id="appointmentDate" required>
+                    </div>
+                    <div class="input-group">
+                        <label><span>⏰</span> સમય</label>
+                        <input type="time" id="appointmentTime" required>
+                    </div>
+                    <div class="input-group full-width">
+                        <label><span>📝</span> વધારાની નોંધ (વૈકલ્પિક)</label>
+                        <textarea id="notes" rows="2" placeholder="લક્ષણો અથવા ખાસ સૂચન..."></textarea>
+                    </div>
+                </div>
+                <button type="submit" id="submitBtn">
+                    <span>✅</span> Appointment ની પુષ્ટિ કરો & Auto-Sync
+                </button>
+            </form>
 
-    <!-- Heading -->
-    <h1>Hi 👋</h1>
+            <div id="statusMessage" class="message-area message-info" style="display: none;"></div>
+            <div id="calendarStatus" style="margin-top: 12px; font-size: 0.85rem;"></div>
+        </div>
+        <footer>
+            ⚡ Automation: Email notification + Google Calendar event creation (One‑click)
+            <br>🔐 તમારા Google Calendar માં ઇવેન્ટ ઉમેરવા માટે permission આપવી પડશે.
+        </footer>
+    </div>
+</div>
 
-    <!-- Paragraph -->
-    <p>Hello! Welcome to my first website 😄</p>
+<script>
+    // ======================== 🔧  CONFIGURATION (REPLACE WITH YOUR KEYS) ========================
+    // ----------------------------- EMAILJS SETUP ---------------------------------
+    // 1. Create account on EmailJS (https://www.emailjs.com/)
+    // 2. Create Email Service (e.g., Gmail) and Template with following variables:
+    //    {{patient_name}}, {{patient_email}}, {{doctor_name}}, {{appointment_datetime}}, {{notes}}
+    // 3. Copy Public Key, Service ID, Template ID and paste below.
+    const EMAILJS_CONFIG = {
+        PUBLIC_KEY: "YOUR_EMAILJS_PUBLIC_KEY",     // Replace with your EmailJS public key
+        SERVICE_ID: "YOUR_SERVICE_ID",            // e.g., service_xxxx
+        TEMPLATE_ID: "YOUR_TEMPLATE_ID"           // e.g., template_xxxx
+    };
 
-    <!-- Button -->
-    <button onclick="sayHello()">Click Me</button>
+    // ----------------------------- GOOGLE CALENDAR API SETUP --------------------
+    // 1. Go to Google Cloud Console -> Create project -> Enable Google Calendar API
+    // 2. Create OAuth 2.0 Client ID (Web application) with Authorized JS origins: http://localhost:5500 or your domain
+    // 3. Add this redirect URI: http://localhost:5500 (or your current domain)
+    // 4. Copy Client ID below.
+    const GOOGLE_CLIENT_ID = "YOUR_GOOGLE_CLIENT_ID.apps.googleusercontent.com";   // Replace with your Google OAuth Client ID
 
-    <!-- JavaScript -->
-    <script>
-        function sayHello() {
-            alert("Hello Harshit! 🚀");
+    // ======================= GLOBAL VARIABLES ==================================
+    let gapiInitialized = false;
+    let tokenClient = null;
+    let currentAccessToken = null;
+    let isAuthenticating = false;
+
+    // Helper function to show messages
+    function showMessage(message, type = 'info') {
+        const msgDiv = document.getElementById('statusMessage');
+        msgDiv.style.display = 'block';
+        msgDiv.innerHTML = message;
+        msgDiv.className = `message-area message-${type}`;
+        // auto hide after 6 seconds for success but keep errors longer
+        if (type === 'success') {
+            setTimeout(() => {
+                if (msgDiv.style.display === 'block') msgDiv.style.display = 'none';
+            }, 6000);
         }
-    </script>
+    }
 
+    function clearMessage() {
+        const msgDiv = document.getElementById('statusMessage');
+        msgDiv.style.display = 'none';
+        msgDiv.innerHTML = '';
+    }
+
+    // Show loading state on button
+    function setLoading(loading) {
+        const btn = document.getElementById('submitBtn');
+        if (loading) {
+            btn.disabled = true;
+            btn.innerHTML = `<span class="loader"></span> Processing... કૃપા કરી રાહ જુઓ`;
+        } else {
+            btn.disabled = false;
+            btn.innerHTML = `<span>✅</span> Appointment ની પુષ્ટિ કરો & Auto-Sync`;
+        }
+    }
+
+    // ======================= EMAILJS INTEGRATION ===============================
+    async function sendAppointmentEmail(patientName, patientEmail, doctorName, appointmentDateTime, notes) {
+        if (!EMAILJS_CONFIG.PUBLIC_KEY || EMAILJS_CONFIG.PUBLIC_KEY === "YOUR_EMAILJS_PUBLIC_KEY") {
+            console.warn("EmailJS keys not configured. Email will not be sent.");
+            showMessage("⚠️ Email system not configured: Please set valid EmailJS credentials in the code (PUBLIC_KEY, SERVICE_ID, TEMPLATE_ID). But appointment sync with calendar done.", "error");
+            return false;
+        }
+        try {
+            emailjs.init(EMAILJS_CONFIG.PUBLIC_KEY);
+            const templateParams = {
+                patient_name: patientName,
+                patient_email: patientEmail,
+                doctor_name: doctorName,
+                appointment_datetime: appointmentDateTime,
+                notes: notes || "કોઈ વધારાની નોંધ નથી",
+                reply_to: patientEmail
+            };
+            const response = await emailjs.send(EMAILJS_CONFIG.SERVICE_ID, EMAILJS_CONFIG.TEMPLATE_ID, templateParams);
+            console.log("EmailJS success:", response);
+            return true;
+        } catch (error) {
+            console.error("EmailJS Error:", error);
+            showMessage(`Email મોકલવામાં સમસ્યા: ${error.text || error.message}. પરંતુ Calendar ઇવેન્ટ બનાવાઈ શકે છે.`, "error");
+            return false;
+        }
+    }
+
+    // ======================= GOOGLE CALENDAR API ================================
+    // Format local datetime to RFC3339 with local timezone offset
+    function formatLocalDateTimeToISO(dateStr, timeStr) {
+        // dateStr = YYYY-MM-DD, timeStr = HH:MM
+        const [year, month, day] = dateStr.split('-');
+        const [hours, minutes] = timeStr.split(':');
+        const localDate = new Date(year, month-1, day, hours, minutes, 0);
+        // get timezone offset in minutes and convert to +/-hh:mm
+        const offset = -localDate.getTimezoneOffset();
+        const sign = offset >= 0 ? '+' : '-';
+        const absOffset = Math.abs(offset);
+        const offsetHours = Math.floor(absOffset / 60);
+        const offsetMinutes = absOffset % 60;
+        const offsetStr = `${sign}${offsetHours.toString().padStart(2,'0')}:${offsetMinutes.toString().padStart(2,'0')}`;
+        const isoString = `${year}-${month}-${day}T${hours}:${minutes}:00${offsetStr}`;
+        return isoString;
+    }
+
+    async function createGoogleCalendarEvent(patientName, doctorName, startDateTimeStr, endDateTimeStr, notes, patientEmail) {
+        if (!GOOGLE_CLIENT_ID || GOOGLE_CLIENT_ID === "YOUR_GOOGLE_CLIENT_ID.apps.googleusercontent.com") {
+            throw new Error("Google Client ID not configured. Please set valid GOOGLE_CLIENT_ID in the code.");
+        }
+        // Ensure gapi client is loaded
+        if (!gapiInitialized) {
+            await new Promise((resolve) => {
+                if (window.gapi && gapi.client) {
+                    resolve();
+                } else {
+                    const checkInterval = setInterval(() => {
+                        if (window.gapi && gapi.client) {
+                            clearInterval(checkInterval);
+                            resolve();
+                        }
+                    }, 100);
+                }
+            });
+            await gapi.client.init({
+                apiKey: '', // not needed for OAuth based calendar
+                clientId: GOOGLE_CLIENT_ID,
+                discoveryDocs: ['https://www.googleapis.com/discovery/v1/apis/calendar/v3/rest'],
+                scope: 'https://www.googleapis.com/auth/calendar.events'
+            });
+            gapiInitialized = true;
+        }
+
+        // Get access token using tokenClient
+        if (!tokenClient) {
+            tokenClient = google.accounts.oauth2.initTokenClient({
+                client_id: GOOGLE_CLIENT_ID,
+                scope: 'https://www.googleapis.com/auth/calendar.events',
+                callback: (resp) => {
+                    if (resp.error) {
+                        throw new Error("OAuth error: " + resp.error);
+                    }
+                    currentAccessToken = resp.access_token;
+                    // set token to gapi client
+                    gapi.client.setToken({ access_token: currentAccessToken });
+                },
+            });
+        }
+
+        // Request token (prompt only if needed)
+        return new Promise((resolve, reject) => {
+            const existingToken = currentAccessToken;
+            if (existingToken) {
+                gapi.client.setToken({ access_token: existingToken });
+                executeCalendarCreate(resolve, reject, patientName, doctorName, startDateTimeStr, endDateTimeStr, notes, patientEmail);
+            } else {
+                tokenClient.callback = async (resp) => {
+                    if (resp.error) {
+                        reject(new Error(resp.error));
+                        return;
+                    }
+                    currentAccessToken = resp.access_token;
+                    gapi.client.setToken({ access_token: currentAccessToken });
+                    executeCalendarCreate(resolve, reject, patientName, doctorName, startDateTimeStr, endDateTimeStr, notes, patientEmail);
+                };
+                // Request token with prompt 'consent' on first time, but later auto
+                tokenClient.requestAccessToken({ prompt: '' });
+            }
+        });
+    }
+
+    async function executeCalendarCreate(resolve, reject, patientName, doctorName, startDateTimeStr, endDateTimeStr, notes, patientEmail) {
+        try {
+            const event = {
+                'summary': `🏥 Appointment: ${patientName} with ${doctorName}`,
+                'description': `Patient: ${patientName}\nEmail: ${patientEmail}\nDoctor: ${doctorName}\nNotes: ${notes || '—'}\n\n📌 Automated booking via Sanjeevani Setu.`,
+                'start': {
+                    'dateTime': startDateTimeStr,
+                    'timeZone': Intl.DateTimeFormat().resolvedOptions().timeZone,
+                },
+                'end': {
+                    'dateTime': endDateTimeStr,
+                    'timeZone': Intl.DateTimeFormat().resolvedOptions().timeZone,
+                },
+                'attendees': [
+                    {'email': patientEmail}
+                ],
+                'reminders': {
+                    'useDefault': false,
+                    'overrides': [
+                        {'method': 'email', 'minutes': 60},
+                        {'method': 'popup', 'minutes': 30}
+                    ]
+                }
+            };
+            const request = gapi.client.calendar.events.insert({
+                'calendarId': 'primary',
+                'resource': event,
+                'sendUpdates': 'all'   // sends email invitation to patient
+            });
+            const response = await request;
+            resolve(response.result);
+        } catch (err) {
+            reject(err);
+        }
+    }
+
+    // ======================= MAIN BOOKING LOGIC =================================
+    document.getElementById('appointmentForm').addEventListener('submit', async (e) => {
+        e.preventDefault();
+        clearMessage();
+        setLoading(true);
+
+        // Get form values
+        const patientName = document.getElementById('patientName').value.trim();
+        const patientEmail = document.getElementById('patientEmail').value.trim();
+        const doctorName = document.getElementById('doctorName').value;
+        const appointmentDate = document.getElementById('appointmentDate').value;
+        const appointmentTime = document.getElementById('appointmentTime').value;
+        const notes = document.getElementById('notes').value.trim();
+
+        // Validations
+        if (!patientName || !patientEmail || !doctorName || !appointmentDate || !appointmentTime) {
+            showMessage("કૃપા કરી બધી આવશ્યક માહિતી ભરો (નામ, ઈમેલ, ડૉક્ટર, તારીખ અને સમય).", "error");
+            setLoading(false);
+            return;
+        }
+
+        // Validate email format
+        const emailPattern = /^[^\s@]+@([^\s@]+\.)+[^\s@]+$/;
+        if (!emailPattern.test(patientEmail)) {
+            showMessage("મહેરબાની કરીને માન્ય ઈમેલ સરનામું દાખલ કરો.", "error");
+            setLoading(false);
+            return;
+        }
+
+        // Check if appointment date is not in past
+        const selectedDateTime = new Date(`${appointmentDate}T${appointmentTime}`);
+        if (selectedDateTime < new Date()) {
+            showMessage("તારીખ અને સમય વર્તમાન સમય કરતા પાછળનો છે. કૃપા કરી ભવિષ્યની મુલાકાત પસંદ કરો.", "error");
+            setLoading(false);
+            return;
+        }
+
+        // Format human readable datetime for email and display
+        const formattedDateTime = new Date(`${appointmentDate}T${appointmentTime}`).toLocaleString('gu-IN', { 
+            weekday: 'short', year: 'numeric', month: 'long', day: 'numeric', hour: '2-digit', minute: '2-digit' 
+        });
+        const appointmentDisplay = `${formattedDateTime}`;
+
+        // Create ISO datetime strings for Calendar (start and end +30 mins)
+        let startIso, endIso;
+        try {
+            startIso = formatLocalDateTimeToISO(appointmentDate, appointmentTime);
+            const endDate = new Date(`${appointmentDate}T${appointmentTime}`);
+            endDate.setMinutes(endDate.getMinutes() + 30);
+            const endDateStr = endDate.toISOString().split('T')[0];
+            const endTimeStr = `${endDate.getHours().toString().padStart(2,'0')}:${endDate.getMinutes().toString().padStart(2,'0')}`;
+            endIso = formatLocalDateTimeToISO(endDateStr, endTimeStr);
+        } catch (err) {
+            showMessage("તારીખ/સમય ફોર્મેટમાં ભૂલ: " + err.message, "error");
+            setLoading(false);
+            return;
+        }
+
+        // Step 1: Create Google Calendar Event (Automation)
+        let calendarEventLink = null;
+        let calendarSuccess = false;
+        try {
+            showMessage("📅 Google Calendar માં ઇવેન્ટ બનાવવા માટે permission આપો... (Popup ખુલશે)", "info");
+            const eventResult = await createGoogleCalendarEvent(patientName, doctorName, startIso, endIso, notes, patientEmail);
+            calendarSuccess = true;
+            calendarEventLink = eventResult.htmlLink || eventResult.id ? `https://calendar.google.com/calendar/r?cid=${eventResult.id}` : null;
+            showMessage(`✅ Google Calendar ઇવેન્ટ સફળતાપૂર્વક બનાવવામાં આવી!`, "success");
+            document.getElementById('calendarStatus').innerHTML = `<span class="status-badge">📆 ઇવેન્ટ તમારા કૅલેન્ડરમાં ઉમેરાઈ ગઈ | <a href="${calendarEventLink}" target="_blank" style="color:#1e3a8a;">કૅલેન્ડર જુઓ</a></span>`;
+        } catch (calendarError) {
+            console.error("Google Calendar error:", calendarError);
+            let errorMsg = calendarError.message || calendarError.result?.error?.message || "અજ્ઞાત ભૂલ";
+            showMessage(`❌ Google Calendar ઇવેન્ટ બનાવવામાં નિષ્ફળતા: ${errorMsg}. કૃપા કરી CLIENT ID તપાસો અને OAuth પરવાનગી માટે ફરી પ્રયત્ન કરો.`, "error");
+            setLoading(false);
+            return;   // Calendar creation is mandatory as per requirement (automation). Stop process if fails.
+        }
+
+        // Step 2: Send Email via EmailJS (only if calendar success)
+        let emailSent = false;
+        if (calendarSuccess) {
+            try {
+                emailSent = await sendAppointmentEmail(patientName, patientEmail, doctorName, appointmentDisplay, notes);
+                if (emailSent) {
+                    showMessage(`📧 પુષ્ટિકરણ ઈમેલ ${patientEmail} પર મોકલવામાં આવ્યો. તમારી એપોઈન્ટમેન્ટની વિગતો જોડાયેલ છે.`, "success");
+                } else {
+                    showMessage(`⚠️ ઈમેલ સેવા ગોઠવેલ નથી, પરંતુ તમારી મુલાકાત Google Calendar માં ઉમેરાઈ ગઈ છે.`, "info");
+                }
+            } catch (emailErr) {
+                console.warn("Email error but calendar done:", emailErr);
+                showMessage(`ℹ️ એપોઈન્ટમેન્ટ Google Calendar માં સફળ રહી, પરંતુ ઈમેલ મોકલવામાં સમસ્યા: ${emailErr.message || "કૃપા કરી EmailJS config તપાસો"}`, "info");
+            }
+        }
+
+        // Final success message with complete details
+        if (calendarSuccess) {
+            const successHtml = `
+                <strong>🎉 સફળતા! 🎉</strong><br>
+                🧑‍🤝‍🧑 દર્દી: ${patientName}<br>
+                👨‍⚕️ ડૉક્ટર: ${doctorName}<br>
+                📅 તારીખ & સમય: ${appointmentDisplay}<br>
+                ${emailSent ? "📧 ઈમેલ પુષ્ટિ મોકલાઈ ગઈ." : "📧 ઈમેલ મોકલવામાં મર્યાદા (કન્ફિગ જરૂરી)."}<br>
+                ✨ ઇવેન્ટ તમારા Google Calendar માં ઉમેરાઈ ગઈ છે. 
+                ${calendarEventLink ? `<a href="${calendarEventLink}" target="_blank">કૅલેન્ડરમાં જુઓ</a>` : ''}
+            `;
+            showMessage(successHtml, "success");
+            // Reset form optionally
+            if (confirm("શું તમે બીજી એપોઈન્ટમેન્ટ બુક કરવા માગો છો? 'OK' દબાવો તો ફોર્મ રીસેટ થશે, 'Cancel' રહેવા દેશે.")) {
+                document.getElementById('appointmentForm').reset();
+                document.getElementById('calendarStatus').innerHTML = '';
+            }
+        } else {
+            // already handled error, but just in case
+            showMessage("Booking failed. Please try again.", "error");
+        }
+        setLoading(false);
+    });
+
+    // ======================= Initialize GAPI & detect config issues =================
+    window.addEventListener('load', async () => {
+        // Check config hints
+        if (EMAILJS_CONFIG.PUBLIC_KEY === "YOUR_EMAILJS_PUBLIC_KEY") {
+            console.warn("⚠️ EmailJS not configured: appointment email will not be sent. Update constants.");
+            showMessage("✉️ Email system setup pending: Replace EMAILJS_CONFIG values with actual keys from EmailJS to receive email alerts.", "info");
+        }
+        if (GOOGLE_CLIENT_ID === "YOUR_GOOGLE_CLIENT_ID.apps.googleusercontent.com") {
+            console.warn("⚠️ Google Calendar Client ID not set.");
+            showMessage("🔐 Google Calendar automation requires valid Client ID. Please set GOOGLE_CLIENT_ID in script to enable auto calendar event creation.", "error");
+            document.getElementById('submitBtn').disabled = true;
+            document.getElementById('submitBtn').style.opacity = 0.6;
+            document.getElementById('submitBtn').title = "Google Client ID missing";
+        } else {
+            // Initialize gapi client silently
+            try {
+                await new Promise((resolve) => {
+                    if (window.gapi) {
+                        gapi.load('client', resolve);
+                    } else {
+                        const checkGapi = setInterval(() => {
+                            if (window.gapi) {
+                                clearInterval(checkGapi);
+                                gapi.load('client', resolve);
+                            }
+                        }, 200);
+                    }
+                });
+                // Pre-init token client (but not request yet)
+                tokenClient = google.accounts.oauth2.initTokenClient({
+                    client_id: GOOGLE_CLIENT_ID,
+                    scope: 'https://www.googleapis.com/auth/calendar.events',
+                    callback: () => {},
+                });
+                gapiInitialized = true;
+                console.log("Google API ready");
+            } catch (err) {
+                console.error("Google init error", err);
+            }
+        }
+    });
+</script>
 </body>
 </html>
