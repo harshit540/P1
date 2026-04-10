@@ -1,0 +1,118 @@
+<!DOCTYPE html>    
+<html lang="gu">    
+<head>    
+    <meta charset="UTF-8">    
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">    
+    <title>Sanjeevani Setu - Doctor Appointment (Backend Integrated)</title>    
+    <style>    
+        /* same as previous styles (keep all CSS from original) */    
+        * { margin:0; padding:0; box-sizing: border-box; font-family: 'Segoe UI', sans-serif; }    
+        body { background: linear-gradient(135deg, #e0f2fe 0%, #f0f9ff 100%); min-height: 100vh; padding: 2rem 1rem; }    
+        .container { max-width: 850px; margin: 0 auto; }    
+        .card { background: white; border-radius: 2rem; box-shadow: 0 25px 45px -12px rgba(0,0,0,0.25); overflow: hidden; }    
+        .header { background: #1e3a8a; padding: 1.8rem 2rem; color: white; }    
+        .header h1:before { content: "🏥"; margin-right: 10px; }    
+        .form-section { padding: 2rem; }    
+        .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem; }    
+        .full-width { grid-column: span 2; }    
+        .input-group { display: flex; flex-direction: column; gap: 0.5rem; }    
+        input, select, textarea { padding: 0.85rem; border-radius: 1rem; border: 1.5px solid #e2e8f0; }    
+        button { background: #1e3a8a; color: white; border: none; padding: 1rem; border-radius: 3rem; font-weight: bold; width: 100%; cursor: pointer; }    
+        .message-area { margin-top: 1.5rem; padding: 1rem; border-radius: 1.2rem; }    
+        .message-success { background: #ecfdf5; border-left: 5px solid #10b981; color: #065f46; }    
+        .message-error { background: #fef2f2; border-left: 5px solid #ef4444; color: #991b1b; }    
+        .loader { display: inline-block; width: 18px; height: 18px; border: 2px solid #fff; border-top-color: transparent; border-radius: 50%; animation: spin 0.6s linear infinite; }    
+        @keyframes spin { to { transform: rotate(360deg); } }    
+        @media (max-width:640px) { .form-grid { grid-template-columns: 1fr; } .full-width { grid-column: span 1; } }    
+    </style>    
+</head>    
+<body>    
+<div class="container">    
+    <div class="card">    
+        <div class="header">    
+            <h1>🏥 Sanjeevani Setu</h1>    
+            <p>Backend Powered: ડેટાબેઝ + Email + Google Calendar Automation</p>    
+        </div>    
+        <div class="form-section">    
+            <form id="appointmentForm">    
+                <div class="form-grid">    
+                    <div class="input-group"><label>🧑‍⚕️ દર્દીનું નામ</label><input type="text" id="patientName" required></div>    
+                    <div class="input-group"><label>📧 ઈમેલ</label><input type="email" id="patientEmail" required></div>    
+                    <div class="input-group"><label>👨‍⚕️ ડૉક્ટર</label>    
+                        <select id="doctorName" required>    
+                            <option value="">પસંદ કરો</option>    
+                            <option>Dr. Aarti Mehta (Cardiologist)</option>    
+                            <option>Dr. Rajiv Desai (Dermatologist)</option>    
+                            <option>Dr. Sonal Shah (General Physician)</option>    
+                            <option>Dr. Vikram Singh (Orthopedic)</option>    
+                        </select>    
+                    </div>    
+                    <div class="input-group"><label>📅 તારીખ</label><input type="date" id="appointmentDate" required></div>    
+                    <div class="input-group"><label>⏰ સમય</label><input type="time" id="appointmentTime" required></div>    
+                    <div class="input-group full-width"><label>📝 નોંધ</label><textarea id="notes" rows="2"></textarea></div>    
+                </div>    
+                <button type="submit" id="submitBtn">✅ બુક કરો & Auto Sync</button>    
+            </form>    
+            <div id="statusMessage" class="message-area" style="display:none;"></div>    
+        </div>    
+        <footer style="text-align:center; padding:1rem; background:#f1f5f9;">⚡ Backend Automation: Email + Google Calendar (Service Account)</footer>    
+    </div>    
+</div>    
+<script>    
+    const API_BASE_URL = "https://p1-8rzp.onrender.com/api";  // તમારા backend URL મુજબ બદલો    
+    const form = document.getElementById('appointmentForm');    
+    const submitBtn = document.getElementById('submitBtn');    
+    const statusDiv = document.getElementById('statusMessage');    
+    
+    function showMessage(msg, type) {    
+        statusDiv.style.display = 'block';    
+        statusDiv.innerHTML = msg;    
+        statusDiv.className = `message-area message-${type}`;    
+        setTimeout(() => { if(statusDiv.style.display === 'block') statusDiv.style.display = 'none'; }, 6000);    
+    }    
+    
+    form.addEventListener('submit', async (e) => {    
+        e.preventDefault();    
+        submitBtn.disabled = true;    
+        submitBtn.innerHTML = `<span class="loader"></span> Booking...`;    
+        statusDiv.style.display = 'none';    
+    
+        const payload = {    
+            patientName: document.getElementById('patientName').value.trim(),    
+            patientEmail: document.getElementById('patientEmail').value.trim(),    
+            doctorName: document.getElementById('doctorName').value,    
+            appointmentDate: document.getElementById('appointmentDate').value,    
+            appointmentTime: document.getElementById('appointmentTime').value,    
+            notes: document.getElementById('notes').value.trim()    
+        };    
+    
+        if(!payload.patientName || !payload.patientEmail || !payload.doctorName || !payload.appointmentDate || !payload.appointmentTime) {    
+            showMessage("કૃપા કરી બધી માહિતી ભરો", "error");    
+            submitBtn.disabled = false;    
+            submitBtn.innerHTML = "✅ બુક કરો & Auto Sync";    
+            return;    
+        }    
+    
+        try {    
+            const res = await fetch(`${API_BASE_URL}/appointments`, {    
+                method: 'POST',    
+                headers: { 'Content-Type': 'application/json' },    
+                body: JSON.stringify(payload)    
+            });    
+            const data = await res.json();    
+            if(res.ok) {    
+                showMessage(`✅ એપોઇન્ટમેન્ટ સફળ! ઈમેલ મોકલાયો અને Calendar માં ઉમેરાઈ. <a href="${data.calendarLink}" target="_blank">કૅલેન્ડર જુઓ</a>`, "success");    
+                form.reset();    
+            } else {    
+                showMessage(`❌ ભૂલ: ${data.error || data.details || "કૃપા કરી backend તપાસો"}`, "error");    
+            }    
+        } catch(err) {    
+            showMessage(`Server connection error: ${err.message}`, "error");    
+        } finally {    
+            submitBtn.disabled = false;    
+            submitBtn.innerHTML = "✅ બુક કરો & Auto Sync";    
+        }    
+    });    
+</script>    
+</body>    
+</html>
